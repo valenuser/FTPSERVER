@@ -4,6 +4,7 @@ import datetime as datetime
 from funcionesServer.login import validateLogin
 from funcionesServer.register import registerUser, checkNameAvailable, checkSpaces
 from funcionesServer.cifrado import cifrado
+from funcionesServer.mails import checkMail
 
 HOST = '127.0.0.1'
 PORT = 65432
@@ -157,10 +158,36 @@ while connection:
             passCifrada = cifrado(infoCifrado)
                     
             datos['password'] = passCifrada
+
+
+            email ='\n\nEmail del usuario:\n\n'
+
+            conn.sendall(email.encode())
+
+            emailUser = conn.recv(4096)
+
+            verifyEmail = checkMail(emailUser.decode())
+
+            if verifyEmail == False:
+                 
+                 while True:
+                        email = 'Por favor escribe un correo electrónico valido.\n\nEmail del usuario:\n\n'
+
+                        conn.sendall(email.encode())
+
+                        emailUser = conn.recv(4096)
+
+                        verifyEmail = checkMail(emailUser.decode())
+                      
+                        if verifyEmail == True:
+                            break                      
+
+
+            datos['email'] = emailUser.decode()
             datos['directorio'] = nombreUser.decode().upper()
             datos['rol'] = 'client'
 
-            registerUser(datos)
+            print('Registrado')
 
 
 print('Servidor cerrado')

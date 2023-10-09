@@ -26,7 +26,7 @@ while connection:
             if len(dato) > 0:
                 break
 
-    socket_client.sendall(dato.encode())
+    socket_client.sendall(dato.encode('utf-8'))
 
     respServer = socket_client.recv(4096)
 
