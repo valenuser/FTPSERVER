@@ -50,9 +50,6 @@ while connection:
 
             infoRecibida = data.decode().split(',')
 
-            print(infoRecibida)
-            print(len(infoRecibida))
-
             datos = {}
 
             if len(infoRecibida) <= 1 or len(infoRecibida) > 2:
@@ -187,7 +184,24 @@ while connection:
             datos['directorio'] = nombreUser.decode().upper()
             datos['rol'] = 'client'
 
-            print('Registrado')
+            if registerUser(datos) == False:
+                advise = 'Algo ha salido mal al finalizar el registro, por favor vuelva a intentarlo\n\n Escriba "finalizar" para volver al menú'
+
+                conn.sendall(advise.encode())
+
+                respuesta = conn.recv(4096)
+
+                if respuesta.decode() != 'finalizar':
+                     while True:
+                          
+                        advise = 'Algo ha salido mal al finalizar el registro, por favor vuelva a intentarlo\n\nEscriba "finalizar" para volver al menú\n\n'
+
+                        conn.sendall(advise.encode())
+
+                        respuesta = conn.recv(4096)    
+
+                        if respuesta.decode() == 'finalizar':
+                             break         
 
 
 print('Servidor cerrado')

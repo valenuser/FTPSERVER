@@ -49,3 +49,24 @@ class Database:
         cursor.execute(sql)
 
         return cursor.fetchall()
+    
+
+    def addUser(self,datos):
+        try:
+            conn = self.connectDB()
+
+            cursor = conn.cursor()
+
+
+            print(datos)
+
+            sql = "insert into user(nombre,password_user,mail_user,directorio,rol) values ('{}','{}','{}','{}','cliente')".format(datos['nombre'],datos['password'],datos['email'],datos['directorio'])
+
+            cursor.execute(sql)
+
+            conn.commit()
+
+            return True
+        
+        except Exception as e:
+            return False 
