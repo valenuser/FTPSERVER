@@ -26,20 +26,30 @@ class Database:
         return conn
 
 
-    def readDB(self,nombre,password):
+    def readDB(self,nombre):
+
+        datos = ''
 
         conn = self.connectDB()
 
         cursor = conn.cursor()
 
-        sql = "SELECT nombre,password_user FROM user where nombre = '{}' AND password_user = '{}' ".format(nombre,password)
+        sql = "SELECT password_user FROM user where nombre = '{}'".format(nombre)
 
         cursor.execute(sql)
 
-        return cursor.fetchall()
+        datos = cursor.fetchall()
+
+        conn.commit()
+
+        print(datos)
+
+        return datos
     
 
     def availableName(self,nombre):
+
+        datos = ''
         conn = self.connectDB()
 
         cursor = conn.cursor()
@@ -48,8 +58,13 @@ class Database:
 
         cursor.execute(sql)
 
-        return cursor.fetchall()
+        datos = cursor.fetchall()
     
+        conn.commit()
+
+        print(datos)
+
+        return datos
 
     def addUser(self,datos):
         try:
@@ -69,4 +84,25 @@ class Database:
             return True
         
         except Exception as e:
+            print(e)
             return False 
+        
+
+
+    def mailCheck(self,mail):
+
+        datos = ''
+
+        conn = self.connectDB()
+
+        cursor = conn.cursor()
+
+        sql = "select mail_user from user where mail_user = '{}'".format(mail)
+
+        cursor.execute(sql)
+
+        datos = cursor.fetchall()
+
+        conn.commit()
+
+        return datos

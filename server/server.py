@@ -1,8 +1,9 @@
 import socket
 import datetime as datetime
+import os
 
 from funcionesServer.login import validateLogin
-from funcionesServer.register import registerUser, checkNameAvailable, checkSpaces
+from funcionesServer.register import registerUser, checkNameAvailable, checkSpaces, availableMail
 from funcionesServer.cifrado import cifrado
 from funcionesServer.mails import checkMail
 
@@ -43,39 +44,54 @@ while connection:
         connection = False
     else:
         if data.decode() == '1':
-            infoUser = 'Por favor escriba su nombre de usuario y su contraseña separado por una coma\nEJEMPLO = Benito,1234'
-            conn.sendall(infoUser.encode())
-
-            data = conn.recv(4096)
-
-            infoRecibida = data.decode().split(',')
-
             datos = {}
 
-            if len(infoRecibida) <= 1 or len(infoRecibida) > 2:
-                while True:
-                    aviso = 'Por favor escriba su nombre de usuario y su contraseña separado por una coma \nEJEMPLO = Benito,1234'
-                    conn.sendall(aviso.encode())
+            infoUser = '\nNombre de usuario:\n'
+            conn.sendall(infoUser.encode())
 
-                    data = conn.recv(4096)
+            nombre = conn.recv(4096)
 
-                    infoRecibida = data.decode().split(',')
+            datos['name'] = nombre.decode()
 
-                    if len(infoRecibida) == 2:
-                         break
+            passUser = '\nContraseña de usuario:\n' 
+            conn.sendall(passUser.encode())
 
+            passwd = conn.recv(4096)
 
-
-            datos['name'] = infoRecibida[0]
-            datos['password'] = infoRecibida[1]
-
+            datos['password'] = passwd.decode()
 
             verifyuser = validateLogin(datos)
 
-            if verifyuser['status'] == False:
+            if verifyuser['status'] == 404:
                     conn.sendall(verifyuser['info'].encode())
 
-            elif verifyuser['status'] == True:     
+            elif verifyuser['status'] == 406:
+                    conn.sendall(verifyuser['info'].encode())
+
+                    intentos = 0
+
+                    while True:
+                        data = conn.recv(4096)
+
+                        datos['password'] = data.decode()
+
+                        verifyuser = validateLogin(datos)
+
+                        if verifyuser['status'] == 200:
+                            conn.sendall(verifyuser['info'].encode())
+                            break
+
+                        elif intentos == 3:
+                            conn.sendall('Cantidad de intentos alcanzados, intentelo de nuevo mas tarde'.encode())
+                            break
+                        else:
+                            intentos+=1
+                            conn.sendall(verifyuser['info'].encode())
+
+
+
+
+            elif verifyuser['status'] == 200:     
                     conn.sendall(verifyuser['info'].encode())
 
 
@@ -163,6 +179,17 @@ while connection:
 
             emailUser = conn.recv(4096)
 
+            if availableMail(emailUser.decode()) == False:
+                 while True:
+                        email = 'Este mail ya ha sido registrado.Por favor introduzca otro.\n\nEmail del usuario:\n\n'
+
+                        conn.sendall(email.encode())
+
+                        emailUser = conn.recv(4096)
+                      
+                        if availableMail(emailUser.decode()) == True:
+                            break                      
+
             verifyEmail = checkMail(emailUser.decode())
 
             if verifyEmail == False:
@@ -185,13 +212,6 @@ while connection:
             datos['rol'] = 'client'
 
             if registerUser(datos) == False:
-                advise = 'Algo ha salido mal al finalizar el registro, por favor vuelva a intentarlo\n\n Escriba "finalizar" para volver al menú'
-
-                conn.sendall(advise.encode())
-
-                respuesta = conn.recv(4096)
-
-                if respuesta.decode() != 'finalizar':
                      while True:
                           
                         advise = 'Algo ha salido mal al finalizar el registro, por favor vuelva a intentarlo\n\nEscriba "finalizar" para volver al menú\n\n'
@@ -202,6 +222,13 @@ while connection:
 
                         if respuesta.decode() == 'finalizar':
                              break         
+                        
+
+            elif registerUser(datos) == True:
+
+                os.system('mkdir directorios/{}'.format(datos['directorio']))
+                os.system('mkdir ../cliente/directorios/{}'.format(datos['directorio']))
+                
 
 
 print('Servidor cerrado')
