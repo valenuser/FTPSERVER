@@ -6,9 +6,14 @@ from funcionesServer.login import validateLogin
 from funcionesServer.register import registerUser, checkNameAvailable, checkSpaces, availableMail
 from funcionesServer.cifrado import cifrado
 from funcionesServer.mails import checkMail
+from funcionesServer.userMenu import menuServer
+
 
 HOST = '127.0.0.1'
 PORT = 65432
+
+
+session = False
 
 socket_server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 
@@ -27,7 +32,7 @@ horaDatos = [str(datetime.datetime.today().hour),str(datetime.datetime.today().m
 fecha = '-'.join(fechaDatos)
 hora = ':'.join(horaDatos)
 
-inicio = '\n\n1 ---> Iniciar Sesion\n2 ---> Registrarse\n3 ---> Salir del sistema\n\n\n'.format(socket.gethostbyname(socket.gethostname()),fecha,hora)
+inicio = '\n\n1 ---> Iniciar Sesion\n2 ---> Registrarse\nEscribe "fin" para cerrar el programa\n\n\n'.format(socket.gethostbyname(socket.gethostname()),fecha,hora)
 
 # bienvenida = 'Bienvenido {}! \nTe has conectado el dia {} a las {}\nQue deseas hacer:\n1 ---> Iniciar Sesion\n2 ---> Registrarse\n3 ---> Salir del sistema\n\n\n'.format(socket.gethostbyname(socket.gethostname()),fecha,hora)
 
@@ -39,8 +44,7 @@ while connection:
 
     data = conn.recv(4096)
 
-    if data.decode() == '3':
-        conn.sendall('Fin'.encode())
+    if data.decode() == 'fin':
         connection = False
     else:
         if data.decode() == '1':
@@ -66,11 +70,11 @@ while connection:
                     conn.sendall(verifyuser['info'].encode())
 
             elif verifyuser['status'] == 406:
-                    conn.sendall(verifyuser['info'].encode())
+                conn.sendall(verifyuser['info'].encode())
 
-                    intentos = 0
+                intentos = 0
 
-                    while True:
+                while True:
                         data = conn.recv(4096)
 
                         datos['password'] = data.decode()
@@ -78,7 +82,12 @@ while connection:
                         verifyuser = validateLogin(datos)
 
                         if verifyuser['status'] == 200:
-                            conn.sendall(verifyuser['info'].encode())
+                            bienvenida =verifyuser['info']+':True' 
+                            conn.sendall(bienvenida.encode())
+
+                            menuServer(conn,datos)
+
+                            
                             break
 
                         elif intentos == 3:
@@ -89,12 +98,12 @@ while connection:
                             conn.sendall(verifyuser['info'].encode())
 
 
-
-
             elif verifyuser['status'] == 200:     
-                    conn.sendall(verifyuser['info'].encode())
 
+                bienvenida =verifyuser['info']+':True' 
+                conn.sendall(bienvenida.encode())
 
+                menuServer(conn,datos)
 
         elif data.decode() == '2':
 
@@ -211,7 +220,9 @@ while connection:
             datos['directorio'] = nombreUser.decode().upper()
             datos['rol'] = 'client'
 
-            if registerUser(datos) == False:
+            stateRegister = registerUser(datos)
+
+            if stateRegister == False:
                      while True:
                           
                         advise = 'Algo ha salido mal al finalizar el registro, por favor vuelva a intentarlo\n\nEscriba "finalizar" para volver al menú\n\n'
@@ -224,10 +235,12 @@ while connection:
                              break         
                         
 
-            elif registerUser(datos) == True:
+            elif stateRegister == True:
 
                 os.system('mkdir directorios/{}'.format(datos['directorio']))
                 os.system('mkdir ../cliente/directorios/{}'.format(datos['directorio']))
+
+                conn.sendall('Usuario registrado'.encode())
                 
 
 

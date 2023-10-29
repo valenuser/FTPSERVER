@@ -42,8 +42,6 @@ class Database:
 
         conn.commit()
 
-        print(datos)
-
         return datos
     
 
@@ -62,9 +60,10 @@ class Database:
     
         conn.commit()
 
-        print(datos)
-
         return datos
+    
+
+    
 
     def addUser(self,datos):
         try:
@@ -72,8 +71,6 @@ class Database:
 
             cursor = conn.cursor()
 
-
-            print(datos)
 
             sql = "insert into user(nombre,password_user,mail_user,directorio,rol) values ('{}','{}','{}','{}','cliente')".format(datos['nombre'],datos['password'],datos['email'],datos['directorio'])
 
@@ -98,6 +95,22 @@ class Database:
         cursor = conn.cursor()
 
         sql = "select mail_user from user where mail_user = '{}'".format(mail)
+
+        cursor.execute(sql)
+
+        datos = cursor.fetchall()
+
+        conn.commit()
+
+        return datos
+    
+
+    def identifyUsers(self):
+        conn = self.connectDB()
+
+        cursor = conn.cursor()
+
+        sql = 'select nombre from user'
 
         cursor.execute(sql)
 
